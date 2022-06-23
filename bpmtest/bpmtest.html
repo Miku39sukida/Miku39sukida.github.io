@@ -1,0 +1,113 @@
+<html>
+<head>
+<title>BPM测试</title>
+
+<script language="JavaScript">
+<!-- Original:  Derek Chilcote-Batto (dac-b@usa.net) -->
+<!-- Web Site:  http://www.mixed.net -->
+<!-- Rewritten by: Rich Reel all8.com -->
+
+<!-- Begin
+var count = 0;
+var msecsFirst = 0;
+var msecsPrevious = 0;
+
+function ResetCount()
+  {
+  count = 0;
+  document.TAP_DISPLAY.T_AVG.value = "";
+  document.TAP_DISPLAY.T_TAP.value = "";
+  document.TAP_DISPLAY.T_RESET.blur();
+  }
+
+function TapForBPM(e)
+  {
+  document.TAP_DISPLAY.T_WAIT.blur();
+  timeSeconds = new Date;
+  msecs = timeSeconds.getTime();
+  if ((msecs - msecsPrevious) > 1000 * document.TAP_DISPLAY.T_WAIT.value)
+    {
+    count = 0;
+    }
+
+  if (count == 0)
+    {
+    document.TAP_DISPLAY.T_AVG.value = "First Beat";
+    document.TAP_DISPLAY.T_TAP.value = "First Beat";
+    msecsFirst = msecs;
+    count = 1;
+    }
+  else
+    {
+    bpmAvg = 60000 * count / (msecs - msecsFirst);
+    document.TAP_DISPLAY.T_AVG.value = Math.round(bpmAvg * 100) / 100;
+    document.TAP_DISPLAY.T_WHOLE.value = Math.round(bpmAvg);
+    count++;
+    document.TAP_DISPLAY.T_TAP.value = count;
+    }
+  msecsPrevious = msecs;
+  return true;
+  }
+document.onkeypress = TapForBPM;
+
+//  End -->
+</script>
+</head>
+
+<body bgcolor="#39C5BB">
+<center>
+
+<noscript>
+<p><table border=0 bgcolor="FFFF99" cellpadding=5><tr><td><font color="FF0000" size=+1><b>&nbsp;! 您的设备可能没有安装Java，请安装后刷新本页重试！&nbsp;</b></font></td></tr></table></p>
+</noscript>
+
+<p>跟着音乐的节奏按任意键来测试BPM
+<table border=0><tr>
+<form name="TAP_DISPLAY">
+<td align=center><table border=0 cellpadding=3 cellspacing=0 bgcolor="#666666"><tr>
+<td><table border=0 cellpadding=4 cellspacing=0 bgcolor="#CCCCCC"><tr>
+<td> </td>
+<td align=right><font color="#000000"><tt>测试结果</tt>
+<input readonly name="T_AVG" size=12></td>
+<td> </td>
+</tr><tr>
+<td> </td>
+<td align=right><font color="#000000"><tt>整体速度</tt>
+<input readonly name="T_WHOLE" size=12></td>
+<td> </td>
+</tr><tr>
+<td> </td>
+<td align=right><font color="#000000"><tt>按键次数</tt>
+<input readonly name="T_TAP" size=12></td>
+<td> </td>
+</tr></table></td></tr></table></td>
+</tr><tr>
+<td align=center>
+暂停
+<select name="T_WAIT">
+  <option value="1">1</option>
+  <option value="2" SELECTED>2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+</select>
+秒或者
+<input type="button" name="T_RESET" value="重置" onclick="ResetCount()">
+以重新开始</td>
+</form></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td>
+如果没反应可以使用文本框&gt; <input name="T_FOCUS" size=2 maxLength=1> &lt;进行测试</td>
+</tr></table>
+
+<font face="arial, helvetica" size="-2">
+
+<p>(每小节点击一次以获取每分钟测试速度 - 可将自动重置间隔设为最大5秒)
+</center>
+
+
+<hr>
+<font size=-2>若要查看英文原版页面请点<a href="https://www.all8.com/tools/bpm.htm">这里</a>，本页只用了html，没有css、js等其它文件，您也可以直接用下载工具或者按F12打开开发者工具，在“源代码”选项卡中选择下载，也可查看<a href="https://github.com/Miku39sukida/Miku39sukida.github.io/tree/main/bpmtest">GitHub中的文件><br>
+翻译by: ボーカロイド大好き（B站）</font>
+</body>
+</html>
