@@ -146,9 +146,9 @@ setInterval(function(){
 	}
 	var filesize = getEstFileSize(true)/1024;
 	if (filesize < 512)
-		document.getElementById('filesizee').innerHTML = "Estimated file size: <span style='color:green'>"+filesize+"</span> [KB]";
+		document.getElementById('filesizee').innerHTML = "估计文件大小：<span style='color:green'>"+filesize+"</span> [KB]";
 	else
-		document.getElementById('filesizee').innerHTML = "Estimated file size: <span style='color:red'>"+filesize+"</span> [KB]";
+		document.getElementById('filesizee').innerHTML = "估计文件大小：<span style='color:red'>"+filesize+"</span> [KB]";
 
 }, 200);
 
@@ -322,7 +322,7 @@ function generateCanvas(ccanvas, cwidth, cheight) {
 			canvas.getContext('2d').drawImage(fimg, cwidth/2-fimg.width * scale /2+ Math.floor(frame * height / 32767)*cwidth, cheight/2-fimg.height * scale/2 + cheight * (frame % getFrameRows()), fimg.width * scale, fimg.height * scale);
 		}
 	}
-	document.getElementById('filesizee').innerHTML = "Estimated file size: "+(getEstFileSize()/1024);
+	document.getElementById('filesizee').innerHTML = "估计文件大小："+(getEstFileSize()/1024);
 }
 
 function createCanvas() { // put centered image on canvas
