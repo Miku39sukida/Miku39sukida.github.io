@@ -1,4 +1,4 @@
-## 下面均为国内镜像链接，不用翻墙也可以加入下载！
+## 下面均为国内镜像链接，不用翻墙也可以加速下载！
 
 [Clash for Android](https://hub.nuaa.cf/Kr328/ClashForAndroid/releases) 
 
