@@ -1,4 +1,4 @@
-# Clash for Windows
+# Clash for Windows 中文版
 
 ## 中文版 | [原版](original.md)
 
