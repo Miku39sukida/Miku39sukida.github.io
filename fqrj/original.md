@@ -1,8 +1,6 @@
 # Clash for Windows
 
-## 可能有的人没有找到中文版的软件，那么我就在这里放个链接吧！
-
-[中文版](cnver.md) | 原版
+## [中文版](cnver.md) | 原版
 
 原地址：[点击进入](https://github.com/Fndroid/clash_for_windows_pkg/releases)
 
