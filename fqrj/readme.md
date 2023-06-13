@@ -8,4 +8,4 @@
 
 [v2rayNG（手机）](https://github.com/2dust/v2rayNG/releases)
 
-### 下载文件太慢？试试[镜像链接](jxlj/readme.md)
+### 下载文件太慢？试试[镜像链接](readme2.md)
