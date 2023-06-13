@@ -2,7 +2,7 @@
 
 ## 可能有的人没有找到中文版的软件，那么我就在这里放个链接吧！
 
-中文版 | [原版](originalpack.md)
+中文版 | [原版](original.md)
 
 原地址：[点击进入](https://github.com/ender-zhao/Clash-for-Windows_Chinese/releases)
 
