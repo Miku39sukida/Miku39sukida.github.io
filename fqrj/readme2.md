@@ -1,4 +1,5 @@
 ## 下面均为国内镜像链接，不用翻墙也可以加速下载！
+## 说明：在地址栏的github前面加上 k 即可进入镜像站哦~
 
 [Clash for Android](https://github.com/Kr328/ClashForAndroid/releases) 
 
