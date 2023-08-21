@@ -1,6 +1,6 @@
 # 用于Telegram **無名** 的广告规则
 
-如果觉得很赞的话，可以[支持一下](https://www.zybuluo.com/Miku39suki/note/2543788)作者哦~
+如果觉得很赞的话，可以[支持一下](Miku39sukida.github.io/adkeyword/support.md)作者哦~
 
 经过我的反复修改，应该是比较完美的入群昵称检测了。可用于Telegram[無名](https://t.me/WuMingv2Bot)机器人！
 直接在群里发送即可设置
