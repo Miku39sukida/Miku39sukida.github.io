@@ -10,18 +10,26 @@
       height: 100%;
       margin: 0;
       font-family: 'Helvetica Neue', Helvetica, Arial, 'Microsoft Yahei', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       background-image: url('https://i1.hdslb.com/bfs/archive/836647ef8facb519c661ffb6662dc9e24e64a32c.jpg'); /* 替换为您的背景图片路径 */
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
     }
+    #fixed-top {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.9); /* 半透明白色背景 */
+      z-index: 1000; /* 确保它在最上面 */
+      text-align: center;
+    }
     #container {
       width: 80%;
       max-width: 600px;
       padding: 15px;
+      margin-top: 60px; /* 留出顶部固定内容的空间 */
       background-color: rgba(255, 255, 255, 0.8); /* 半透明白色背景 */
       border-radius: 10px; /* 圆角 */
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* 阴影 */
@@ -51,8 +59,10 @@
   </style>
 </head>
 <body>
-  <div id="container">
+  <div id="fixed-top">
     <h1>Clash</h1>
+  </div>
+  <div id="container">
     <p>提示：必须要根据自己的处理器选择文件下载！另外，下载Clash Meta直接点开assets，在下面选择universal-release下载安装即可。如果不想占用太多空间，可以利用终端输入指令neofetch查看型号。Windows用winget install neofetch安装命令，安卓可以用Termux安装neofetch指令查看<br>tips：手机下meta，电脑下载verge rev，这是我个人推荐的。<br>如果还是以前原版的clash？你已经跟不上时代了。<br>请在下面选择平台和教程</p>
     <h2>手机</h2>
     <p><a href="https://github.com/MetaCubeX/ClashMetaForAndroid/releases" class="button">Clash Meta</a></p>
