@@ -1,70 +1,69 @@
 <!doctype html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>代理软件列表</title>
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style type="text/css">
-html {
-  font-family: 'Helvetica Neue', Helvetica, Arial, 'Microsoft Yahei', sans-serif;
-  -ms-text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  margin: 0;
-  background: url('https://media.9game.cn/gamebase/2021/5/22/227230805.JPG') no-repeat center center fixed;
-  background-size: cover;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-#container {
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  text-align: center;
-  max-width: 600px;
-}
-
-h2 {
-  font-size: 2em;
-}
-
-p {
-  font-size: 1.2em;
-  line-height: 1.6;
-}
-
-a.button {
-  display: inline-block;
-  padding: 10px 20px;
-  margin: 10px;
-  background-color: #428bca;
-  color: #ffffff;
-  text-decoration: none;
-  border-radius: 5px;
-}
-
-a.button:hover {
-  background-color: #2a6496;
-}
-
-a.button:focus {
-  outline: none;
-  box-shadow: 0 0 5px rgba(66, 139, 202, 0.5);
-}
-
-</style>
+  <meta charset="utf-8">
+  <title>Clash Download</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, 'Microsoft Yahei', sans-serif;
+      background-image: url('https://i1.hdslb.com/bfs/archive/836647ef8facb519c661ffb6662dc9e24e64a32c.jpg'); /* 替换为您的背景图片路径 */
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    #fixed-top {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.9); /* 半透明白色背景 */
+      z-index: 1000; /* 确保它在最上面 */
+      text-align: center;
+    }
+    #container {
+      width: 80%;
+      max-width: 600px;
+      padding: 15px;
+      margin-top: 60px; /* 留出顶部固定内容的空间 */
+      background-color: rgba(255, 255, 255, 0.8); /* 半透明白色背景 */
+      border-radius: 10px; /* 圆角 */
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* 阴影 */
+      text-align: center;
+    }
+    #container h1 {
+      font-size: 2em;
+    }
+    #container p {
+      font-size: 1.2em;
+      line-height: 1.6;
+    }
+    #container a.button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin: 10px;
+      background-color: #428bca; /* 按钮背景色 */
+      color: #ffffff; /* 按钮文字颜色 */
+      text-decoration: none;
+      border-radius: 5px;
+      border: 1px solid #357ebd; /* 按钮边框 */
+      transition: background-color 0.3s ease;
+    }
+    #container a.button:hover {
+      background-color: #3071a9; /* 按钮鼠标悬停时背景色 */
+    }
+  </style>
 </head>
 <body>
-<div id="container">
-  <h2>代理软件</h2>
-  <p>给大家整理出来了很多代理软件，请大家按需下载。<br>如果进不去GitHub的可以把原始地址 github.com 修改为镜像链接 bgithub.xyz 试试，和原来的一模一样。</p>
+  <div id="fixed-top">
+    <h1>代理软件</h1>
+  </div>
+  <div id="container">
+    <p>给大家整理出来了很多代理软件，请大家按需下载。<br>如果进不去GitHub的可以把原始地址 github.com 修改为镜像链接 bgithub.xyz 试试，和原来的一模一样。</p>
   <p>
     <a href="Clash.html" class="button">Clash</a>
     <a href="Matsuri.html" class="button">まつり（Matsuri）</a>
@@ -80,6 +79,6 @@ a.button:focus {
     <a href="https://github.com/hiddify/hiddify-next/releases/tag/v1.1.1" class="button">Hiddify（请根据所使用的设备下载）</a><br>
     <a href="https://apps.apple.com/us/app/streisand/id6450534064" class="button">iOS新出的代理软件streisand</a>
   </p>
-</div>
+  </div>
 </body>
 </html>
