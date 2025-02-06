@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "GPT-SoVITS",
+    "version": "1.0",
+    "description": "用于合成语音",
+    "icons": [
+        {
+            "src": "icon_iapp.png",
+            "sizes": "225x225"
+        }
+    ],
+    "action": {
+        "default_popup": "index.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "permissions": ["activeTab"]
+}
+
