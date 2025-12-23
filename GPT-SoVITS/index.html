@@ -975,9 +975,13 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(() => console.log('Service Worker 注册成功'))
-                    .catch(err => console.warn('Service Worker 注册失败:', err));
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                    .then((registration) => {
+                        console.log('Service Worker 注册成功:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.warn('Service Worker 注册失败:', err);
+                    });
             });
         }
     </script>
