@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <title>音频合成</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4CAF50',
+                        secondary: '#2E7D32',
+                        accent: '#FF9800',
+                        neutral: '#F5F5F5',
+                        dark: '#333333'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .audio-thumb {
+                @apply appearance-none h-2 bg-gray-300 rounded-lg;
+            }
+            .audio-thumb::-webkit-slider-thumb {
+                @apply appearance-none w-4 h-4 rounded-full bg-primary cursor-pointer transition-all duration-200 hover:scale-125;
+            }
+            .btn-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .card-shadow {
+                @apply shadow-md hover:shadow-lg transition-shadow duration-300;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-neutral to-gray-200 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden card-shadow">
+            <div class="bg-primary text-white p-6">
+                <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold">AI语音合成</h1>
+                <p class="opacity-80 mt-1">将文字转换为逼真的语音</p>
+            </div>
+            
+            <div class="p-6">
+                <form id="synthesisForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="text" class="block text-dark font-medium mb-2">文本内容</label>
+                            <textarea id="text" rows="5" placeholder="输入要合成的文本..." class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all"></textarea>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="textLang" class="block text-dark font-medium mb-2">语言选择</label>
+                                <select id="textLang" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                    <option value="all_zh">中文</option>
+                                    <option value="all_yue">粤语</option>
+                                    <option value="en">英语</option>
+                                    <option value="all_ja">日语</option>
+                                    <option value="all_ko">韩文</option>
+                                    <option value="zh">中英混合</option>
+                                    <option value="ja">日英混合</option>
+                                    <option value="ko">韩英混合</option>
+                                    <option value="auto">多语种混合</option>
+                                    <option value="auto_yue">多语种混合（粤语）</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="character" class="block text-dark font-medium mb-2">角色选择</label>
+                                <select id="character" onchange="updateEmotionOptions(this.value)" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                    <option value="">请选择角色</option>
+                                    <option value="hutao">胡桃</option>
+                                    <option value="klee">可莉</option>
+                                    <option value="nahida">纳西妲</option>
+                                    <option value="zhongli">钟离</option>
+                                    <option value="LuoTianyi">洛天依</option>
+                                    <option value="Charlotte">夏洛蒂</option>
+                                    <option value="keqing">刻晴</option>
+                                    <option value="chevreuse">夏沃蕾</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="emotion" class="block text-dark font-medium mb-2">情感选择</label>
+                                <select id="emotion" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                    <!-- 情感选项将由 JavaScript 动态更新 -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="splitMethod" class="block text-dark font-medium mb-2">分割方式</label>
+                            <select id="splitMethod" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                <option value="cut0">不切</option>
+                                <option value="cut1">凑四句一切</option>
+                                <option value="cut2">凑50字一切</option>
+                                <option value="cut3">按中文句号。切</option>
+                                <option value="cut4">按英文句号.切</option>
+                                <option value="cut5">按标点符号切</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="refAudioPath" class="block text-dark font-medium mb-2">参考音频路径</label>
+                            <input type="text" id="refAudioPath" readonly class="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-100 text-gray-500">
+                        </div>
+                    </div>
+                    
+                    <button id="synthesizeButton" type="button" onclick="synthesizeAudio()" class="w-full py-4 bg-primary hover:bg-secondary text-white font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 btn-hover">
+                        <i class="fa-solid fa-wave-square"></i>
+                        <span>开始合成</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 改进后的音频播放器 -->
+        <div id="audioPlayerContainer" class="mt-8 bg-white rounded-2xl shadow-xl overflow-hidden card-shadow opacity-0 transition-all duration-500 transform scale-95 pointer-events-none">
+            <div class="bg-gradient-to-r from-primary/90 to-secondary p-6 text-white">
+                <h2 class="text-xl font-bold">音频播放</h2>
+                <p class="opacity-80 text-sm">播放前需要准备1秒时间</p>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div id="preparationProgress" class="hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600">准备中</span>
+                        <span id="prepTime" class="text-gray-600">1.0s</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="prepProgressBar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div id="audioControls" class="space-y-4 hidden">
+                    <div class="flex items-center gap-4">
+                        <button id="playPauseBtn" class="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:bg-secondary transition-all btn-hover">
+                            <i class="fa-solid fa-play text-xl"></i>
+                        </button>
+                        
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <span id="currentTime" class="text-gray-600">0:00</span>
+                                <span id="duration" class="text-gray-600">0:00</span>
+                            </div>
+                            <input type="range" id="seekBar" min="0" value="0" class="w-full audio-thumb">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <button id="volumeBtn" class="text-gray-600 hover:text-primary transition-colors">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <input type="range" id="volumeBar" min="0" max="1" step="0.1" value="1" class="w-24 audio-thumb">
+                        </div>
+                        
+                        <div>
+                            <button id="downloadBtn" class="text-primary hover:text-secondary transition-colors flex items-center gap-1">
+                                <i class="fa-solid fa-download"></i>
+                                <span>下载音频</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="mt-auto py-4 text-center text-gray-500 text-sm">
+        <p>© 2025 音频合成系统 | <a href="#" class="text-primary hover:underline">使用条款</a> | <a href="#" class="text-primary hover:underline">隐私政策</a></p>
+    </footer>
+    
+    <script>
+        let promptText = '';
+        let audioBlob = null;
+        let audioUrl = null;
+        let audioContext = null;
+        let analyser = null;
+        let dataArray = null;
+        let bufferLength = null;
+        let canvas = null;
+        let canvasCtx = null;
+        let animationId = null;
+        let audioElement = null;
+        let mediaSourceNode = null; // 新增：媒体源节点
+        
+        async function setVoiceModel(character) {
+            let gptModelUrl = '';
+            let sovitsModelUrl = '';
+        
+            switch (character) {
+                case 'hutao':
+                    gptModelUrl = 'http://110.42.111.82:9880/set_gpt_weights?weights_path=GPT_weights_v2/胡桃-e10.ckpt';
+                    sovitsModelUrl = 'http://110.42.111.82:9880/set_sovits_weights?weights_path=SoVITS_weights_v2/胡桃_e10_s210.pth';
+                    break;
+                case 'klee':
+                    gptModelUrl = 'http://110.42.111.82:9880/set_gpt_weights?weights_path=GPT_weights_v2/可莉-e10.ckpt';
+                    sovitsModelUrl = 'http://110.42.111.82:9880/set_sovits_weights?weights_path=SoVITS_weights_v2/可莉_e10_s210.pth';
+                    break;
+                case 'nahida':
+                    gptModelUrl = 'http://110.42.111.82:9880/set_gpt_weights?weights_path=GPT_weights_v2/纳西妲-e10.ckpt';
+                    sovitsModelUrl = 'http://110.42.111.82:9880/set_sovits_weights?weights_path=SoVITS_weights_v2/纳西妲_e10_s400.pth';
+                    break;
+                case 'zhongli':
+                    gptModelUrl = 'http://110.42.111.82:9880/set_gpt_weights?weights_path=GPT_weights_v2/钟离-e10.ckpt';
+                    sovitsModelUrl = 'http://110.42.111.82:9880/set_sovits_weights?weights_path=SoVITS_weights_v2/钟离_e10_s1120.pth';
+                    break;
+                case 'LuoTianyi':
+                    gptModelUrl = 'http://110.42.111.82:9880/set_gpt_weights?weights_path=GPT_weights_v2/luotianyi-e50.ckpt';
+                    sovitsModelUrl = 'http://110.42.111.82:9880/set_sovits_weights?weights_path=SoVITS_weights_v2/luotianyi_e50_s800.pth';
+                    break;
+                case 'Charlotte':
+                    gptModelUrl = 'http://110.42.111.82:9880/set_gpt_weights?weights_path=GPT_weights_v2/夏洛蒂-e10.ckpt';
+                    sovitsModelUrl = 'http://110.42.111.82:9880/set_sovits_weights?weights_path=SoVITS_weights_v2/夏洛蒂_e10_s510.pth';
+                    break;
+                case 'keqing':
+                    gptModelUrl = 'http://110.42.111.82:9880/set_gpt_weights?weights_path=GPT_weights_v2/刻晴-e10.ckpt';
+                    sovitsModelUrl = 'http://110.42.111.82:9880/set_sovits_weights?weights_path=SoVITS_weights_v2/刻晴_e10_s190.pth';
+                    break;
+                case 'chevreuse':
+                    gptModelUrl = 'http://110.42.111.82:9880/set_gpt_weights?weights_path=GPT_weights_v2/夏沃蕾-e10.ckpt';
+                    sovitsModelUrl = 'http://110.42.111.82:9880/set_sovits_weights?weights_path=SoVITS_weights_v2/夏沃蕾_e10_s460.pth';
+                    break;
+                default:
+                    console.error('未知角色：', character);
+                    break;
+            }
+        
+            try {
+                await Promise.all([
+                    fetch(gptModelUrl),
+                    fetch(sovitsModelUrl)
+                ]);
+                console.log('语音模型切换成功！');
+            } catch (error) {
+                console.error('语音模型切换失败:', error);
+                alert('语音模型切换失败，请重试');
+            }
+        }
+
+        function updateEmotionOptions(character) {
+            const emotionSelect = document.getElementById('emotion');
+            emotionSelect.innerHTML = ''; // 清空之前的选项
+
+            switch (character) {
+                case 'hutao':
+                    addOption(emotionSelect, 'Normal', 'Normal');
+                    addOption(emotionSelect, 'happy', '快乐');
+                    addOption(emotionSelect, 'tanoshii', '活跃');
+                    addOption(emotionSelect, 'sigh', '叹气');
+                    addOption(emotionSelect, 'huh', '思考');
+                    addOption(emotionSelect, 'serious', '认真');
+                    addOption(emotionSelect, 'serious2', '认真2');
+                    addOption(emotionSelect, 'wara', '笑');
+                    addOption(emotionSelect, 'chat', '闲聊');
+                    addOption(emotionSelect, 'chat2', '闲聊2');
+                    addOption(emotionSelect, 'chat3', '闲聊3');
+                    addOption(emotionSelect, 'justice', '正义');
+                    addOption(emotionSelect, 'aiya', '哎呀');
+                    addOption(emotionSelect, 'Angry', '生气');
+                    addOption(emotionSelect, 'Surprised', '惊了');
+                    addOption(emotionSelect, 'Anxious', '急了');
+                    break;
+                case 'klee':
+                    addOption(emotionSelect, 'Normal', 'Normal');
+                    addOption(emotionSelect, 'normal2', 'normal 2');
+                    addOption(emotionSelect, 'happy', '快乐');
+                    addOption(emotionSelect, 'tanoshii', '活跃');
+                    addOption(emotionSelect, 'ambivalent', '纠结');
+                    addOption(emotionSelect, 'excited', '兴奋');
+                    addOption(emotionSelect, 'serious', '认真');
+                    addOption(emotionSelect, 'doubt', '无奈');
+                    addOption(emotionSelect, 'bother', '烦');
+                    addOption(emotionSelect, 'Anxious', '急了');
+                    addOption(emotionSelect, 'angry', '生气');
+                    addOption(emotionSelect, 'proud', '骄傲');
+                    addOption(emotionSelect, 'leisure', '闲');
+                    break;
+                case 'nahida':
+                    addOption(emotionSelect, 'Normal', 'Normal');
+                    addOption(emotionSelect, 'happy', '快乐');
+                    addOption(emotionSelect, 'emo', '感动');
+                    addOption(emotionSelect, 'thanks', '收到赠礼');
+                    addOption(emotionSelect, 'thanks_2', '收到赠礼2');
+                    addOption(emotionSelect, 'thinking', '思考');
+                    addOption(emotionSelect, 'Angry1', '生气1');
+                    addOption(emotionSelect, 'Angry2', '生气2');
+                    break;
+                case 'zhongli':
+                    addOption(emotionSelect, 'Normal', 'Normal');
+                    break;
+                case 'LuoTianyi':
+                    addOption(emotionSelect, 'Normal', 'Normal');
+                    break;
+                case 'Charlotte':
+                    addOption(emotionSelect, 'Normal', 'Normal');
+                    addOption(emotionSelect, 'normal2', 'Normal 2');
+                    addOption(emotionSelect, 'chat', '闲聊');
+                    addOption(emotionSelect, 'chat2', '闲聊2');
+                    addOption(emotionSelect, 'chat3', '闲聊3');
+                    addOption(emotionSelect, 'enthusiasm', '热情');
+                    addOption(emotionSelect, 'vivid', '活跃');
+                    addOption(emotionSelect, 'Happy', '兴奋');
+                    addOption(emotionSelect, 'angry', '生气');
+                    addOption(emotionSelect, 'angry2', '生气2');
+                    addOption(emotionSelect, 'anxious', '急了');
+                    addOption(emotionSelect, '111', '自我介绍');
+                    addOption(emotionSelect, 'News', '新闻采访');
+                    addOption(emotionSelect, 'ask', '询问');
+                    break;
+                case 'keqing':
+                    addOption(emotionSelect, 'Normal', 'Normal');
+                    addOption(emotionSelect, 'Normal2', 'Normal2');
+                    addOption(emotionSelect, 'alah', '唉');
+                    addOption(emotionSelect, 'prevent', '阻止');
+                    addOption(emotionSelect, 'momentum', '气势');
+                    addOption(emotionSelect, 'ambivalent', '纠结');
+                    addOption(emotionSelect, 'chat', '闲聊');
+                    break;
+                case 'chevreuse':
+                    addOption(emotionSelect, 'Normal', 'Normal');
+                    break;
+                default:
+                    console.error('未知角色：', character);
+                    break;
+            }
+        }
+
+        function addOption(selectElement, value, text) {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = text;
+            selectElement.appendChild(option);
+        }
+
+        function updateRefAudioPath(character, emotion) {
+            let refAudioPath = '';
+
+            switch (character) {
+                case 'hutao':
+                    switch (emotion) {
+                        case "happy":
+                            refAudioPath = "E:\\参考音频\\胡桃\\认真\\不过本堂主为了讨个好彩头，现编了一个！.wav";
+                            promptText = "不过本堂主为了讨个好彩头，现编了一个！";
+                            break;
+                        case "tanoshii":
+                            refAudioPath = "D:\\Voice\\原神角色语音\\璃月\\胡桃\\需要帮手吗？需要帮手吗？我来啦！若你需要帮助，胡桃我定当全力以赴，绝不推辞。.wav";
+                            promptText = "需要帮手吗？需要帮手吗？我来啦！若你需要帮助，胡桃我定当全力以赴，绝不推辞。";
+                            break;
+                        case "sigh":
+                            refAudioPath = "D:\\Voice\\原神角色语音\\璃月\\胡桃\\哎呀…麻烦喽。.wav";
+                            promptText = "哎呀…麻烦喽。";
+                            break;
+                        case "huh":
+                            refAudioPath = "D:\\胡桃\\vo_HTLQ001_4_hutao_10.wav";
+                            promptText = "有什么不愿意面对的，都是迟早的事啊。";
+                            break;
+                        case "serious":
+                            refAudioPath = "E:\\参考音频\\胡桃\\认真\\我说白术，你不会看不出来吧？难不成你师父，忘了教你这门功夫？.wav";
+                            promptText = "我说白术，你不会看不出来吧？难不成你师父，忘了教你这门功夫？";
+                            break;
+                        case "Normal":
+                            refAudioPath = "E:\\参考音频\\胡桃\\Normal\\那个游戏机我倒是知道。这个好像有点复杂，可能需要软路由吧，我没研究过，反正油管上有教程。.wav";
+                            promptText = "那个游戏机我倒是知道。这个好像有点复杂，可能需要软路由吧，我没研究过，反正油管上有教程。";
+                            break;
+                        case "serious2":
+                            refAudioPath = "E:\\参考音频\\胡桃\\认真\\受人之托，忠人之事。我们往生堂性质特殊，肩负着双倍责任，所以，一定要让两个世界的人都满意才行。.wav";
+                            promptText = "受人之托，忠人之事。我们往生堂性质特殊，肩负着双倍责任，所以，一定要让两个世界的人都满意才行。";
+                            break;
+                        case "wara":
+                            refAudioPath = "D:\\胡桃\\vo_HTLQ004_1_hutao_18.wav";
+                            promptText = "哈哈哈，没有啦。看你们这个样子我就放心了，果然普通人是没办法轻易进去的。";
+                            break;
+                        case "chat":
+                            refAudioPath = "E:\\参考音频\\胡桃\\闲聊\\所以对普通人来说，最好的状态就是不知道幽灵鬼怪的事，或者认为它们根本不存在。.wav";
+                            promptText = "所以对普通人来说，最好的状态就是不知道幽灵鬼怪的事，或者认为它们根本不存在。";
+                            break;
+                        case "chat2":
+                            refAudioPath = "D:\\胡桃\\vo_HTLQ001_3_hutao_05.wav";
+                            promptText = "我是胡桃，往生堂的当代堂主，具体掌管的…嗯，就是些生离死别的小事。";
+                            break;
+                        case "chat3":
+                            refAudioPath = "D:\\胡桃\\vo_BZLQ001_6_hutao_08.wav";
+                            promptText = "听爷爷说，他们俩年轻的时候，曾经一起外出游历，在沉玉谷遇到了一名药师。";
+                            break;
+                        case "justice":
+                            refAudioPath = "D:\\Voice\\原神角色语音\\璃月\\胡桃\\吃饱喝饱，一路走好！.wav";
+                            promptText = "吃饱喝饱，一路走好！";
+                            break;
+                        case "aiya":
+                            refAudioPath = "D:\\胡桃\\vo_SGEQ001_2_hutao_09.wav";
+                            promptText = "哎呀，凡事总有第一次。谁不是从「地上一根草，树上两只鸟」开始的呢？";
+                            break;
+                        case "Angry":
+                            refAudioPath = "E:\\参考音频\\胡桃\\生气\\喂！！你们几个有完没完！！都别再闹了，给我停下！！.wav";
+                            promptText = "喂！！你们几个有完没完！！都别再闹了，给我停下！！";
+                            break;
+                        case "Surprised":
+                            refAudioPath = "D:\\胡桃\\vo_HTLQ001_14_hutao_15.wav";
+                            promptText = "欸欸——？！难道你在指望往生堂堂主去治病救人吗？";
+                            break;
+                        case "Anxious":
+                            refAudioPath = "D:\\胡桃\\vo_HTLQ001_4_hutao_07.wav";
+                            promptText = "喂喂，等等！那、那再打个折怎么样！如果一次满十个人可以有七折优惠！";
+                            break;
+                    }
+                    break;
+                case 'klee':
+                    switch (emotion) {
+                        case "happy":
+                            refAudioPath = "E:\\参考音频\\可莉\\开心\\今天也吃到了好吃的东西，可莉好开心！谢谢你！.wav";
+                            promptText = "今天也吃到了好吃的东西，可莉好开心！谢谢你！";
+                            break;
+                        case "tanoshii":
+                            refAudioPath = "E:\\参考音频\\可莉\\活跃\\早安！带可莉出去玩吧！我们一起来冒险！.wav";
+                            promptText = "早安！带可莉出去玩吧！我们一起来冒险！";
+                            break;
+                        case "ambivalent":
+                            refAudioPath = "E:\\参考音频\\可莉\\唔，不过要…等明天？可莉稍微有点累哦….wav";
+                            promptText = "唔，不过要…等明天？可莉稍微有点累哦…";
+                            break;
+                        case "excited":
+                            refAudioPath = "E:\\参考音频\\可莉\\好呀好呀！跟可莉去炸鱼！.wav";
+                            promptText = "好呀好呀！跟可莉去炸鱼！";
+                            break;
+                        case "serious":
+                            refAudioPath = "E:\\参考音频\\可莉\\认真\\每一只蜥蜴的花纹都是不同的，有些蜥蜴的尾巴干燥以后磨成粉，可以当做炸药的材料哦。.wav";
+                            promptText = "每一只蜥蜴的花纹都是不同的，有些蜥蜴的尾巴干燥以后磨成粉，可以当做炸药的材料哦。";
+                            break;
+                        case "normal2":
+                            refAudioPath = "E:\\参考音频\\可莉\\买东西那天还有一个人也一起帮着看了款式，那个人好像叫.wav";
+                            promptText = "买东西那天还有一个人也一起帮着看了款式，那个人好像叫……";
+                            break;
+                        case "Normal":
+                            refAudioPath = "E:\\参考音频\\可莉\\Normal\\这件事说起来是很有道理的。但我不得不说使用机场是要看部分地区和运营商的情况。.wav";
+                            promptText = "这件事说起来是很有道理的。但我不得不说使用机场是要看部分地区和运营商的情况。";
+                            break;
+                        case "bother":
+                            refAudioPath = "E:\\参考音频\\可莉\\烦\\讨厌蒙德蟹——什么蟹都讨厌——可莉要出去玩——不要坐在餐桌前慢慢剥壳——.wav";
+                            promptText = "讨厌蒙德蟹——什么蟹都讨厌——可莉要出去玩——不要坐在餐桌前慢慢剥壳——";
+                            break;
+                        case "Anxious":
+                            refAudioPath = "E:\\可莉\\vo_EQYQ003_8_klee_03.wav";
+                            promptText = "不会失败的，不要说这种话啦！";
+                            break;
+                        case "proud":
+                            refAudioPath = "E:\\参考音频\\可莉\\骄傲\\优菈姐姐是能劈开一切的「魔剑士」，还有亮闪闪的、好看的披风呢！.wav";
+                            promptText = "优菈姐姐是能劈开一切的「魔剑士」，还有亮闪闪的、好看的披风呢！";
+                            break;
+                        case "leisure":
+                            refAudioPath = "E:\\参考音频\\可莉\\闲\\可莉喜欢毛茸茸的东西。比如嘟嘟可、蒲公英，还有雷泽的头发。.wav";
+                            promptText = "可莉喜欢毛茸茸的东西。比如嘟嘟可、蒲公英，还有雷泽的头发。";
+                            break;
+                        case "angry":
+                            refAudioPath = "E:\\参考音频\\可莉\\生气\\够了！可莉生气了！你们这些人烦不烦？！.wav";
+                            promptText = "够了！可莉生气了！你们这些人烦不烦？！";
+                            break;
+                        case "doubt":
+                            refAudioPath = "E:\\可莉\\vo_JNJEQ003_6_klee_06.wav";
+                            promptText = "怎么会这样，雷泽，风神大人没有回来，是不是他不喜欢我们准备的酒？";
+                            break;
+                    }
+                    break;
+                case 'nahida':
+                    switch (emotion) {
+                        case "happy":
+                            refAudioPath = "E:\\参考音频\\纳西妲\\Happy\\昨晚真叫人愉快啊，我到现在还像漂浮在水面上的蜡烛那样徜徉在幸福和喜悦中呢。.wav";
+                            promptText = "昨晚真叫人愉快啊，我到现在还像漂浮在水面上的蜡烛那样徜徉在幸福和喜悦中呢。";
+                            break;
+                        case "thanks":
+                            refAudioPath = "E:\\纳西妲\\纳西妲\\vo_nahida_spice_event_pref_01.wav";
+                            promptText = "像这样的好味道，应该被世界永久记录下来。谢谢你。";
+                            break;
+                        case "thanks_2":
+                            refAudioPath = "E:\\纳西妲\\纳西妲\\vo_nahida_spice_event_normal_01.wav";
+                            promptText = "呵呵，你的心意我收到了，味道也可圈可点。";
+                            break;
+                        case "emo":
+                            refAudioPath = "E:\\参考音频\\纳西妲\\感动\\…谢谢，各位，太感谢了。.wav";
+                            promptText = "…谢谢，各位，太感谢了。";
+                            break;
+                        case "Angry1":
+                            refAudioPath = "E:\\参考音频\\纳西妲\\生气\\可你只把最安逸的东西展示给了他们，你的梦境建立在更多看不见的痛苦之上。.wav";
+                            promptText = "可你只把最安逸的东西展示给了他们，你的梦境建立在更多看不见的痛苦之上。";
+                            break;
+                        case "Angry2":
+                            refAudioPath = "E:\\参考音频\\纳西妲\\生气\\你还会选择现在的位置吗？到那时，你觉得自己又会是什么呢？.wav";
+                            promptText = "你还会选择现在的位置吗？到那时，你觉得自己又会是什么呢？";
+                            break;
+                        case "Normal":
+                            refAudioPath = "E:\\参考音频\\纳西妲\\normal\\好啦，就先聊到这里吧。以后如果你们想我的话，说不定我会在你们的梦里出现哦？.wav";
+                            promptText = "好啦，就先聊到这里吧。以后如果你们想我的话，说不定我会在你们的梦里出现哦？";
+                            break;
+                        case "thinking":
+                            refAudioPath = "E:\\参考音频\\纳西妲\\连你都这么说，看来，世界树不会记录降临者。来自世界之外的个体，均不属于提瓦特。.wav";
+                            promptText = "连你都这么说，看来，世界树不会记录降临者。来自世界之外的个体，均不属于提瓦特。";
+                            break;
+                    }
+                    break;
+                case 'zhongli':
+                    switch (emotion) {
+                        case "Normal":
+                            refAudioPath = "E:\\参考音频\\钟离\\无事逢客休，席上校两棋…我们开局吧。.wav";
+                            promptText = "无事逢客休，席上校两棋…我们开局吧。";
+                            break;
+                    }
+                    break;
+                case 'LuoTianyi':
+                    switch (emotion) {
+                        case "Normal":
+                            refAudioPath = "D:\\quark\\参考音频\\大家好，我是虚拟歌手洛天依.wav";
+                            promptText = "大家好，我是虚拟歌手洛天依，欢迎来到我的十周年生日会直播。";
+                            break;
+                    }
+                    break;
+                case 'Charlotte':
+                    switch (emotion) {
+                        case "Normal":
+                            refAudioPath = "E:\\参考音频\\夏洛蒂\\您不介意的话，可以讲给我们听听，一般说出来会好很多。.wav";
+                            promptText = "您不介意的话，可以讲给我们听听，一般说出来会好很多。";
+                            break;
+                        case "normal2":
+                            refAudioPath = "E:\\夏洛蒂\\vo_EQHDJ303_11_charlotte_03.wav";
+                            promptText = "嗯，可以这么理解。我们枫丹人也是很爱喝茶的嘛。";
+                            break;
+                        case "chat":
+                            refAudioPath = "E:\\夏洛蒂\\vo_charlotte_character_idle_01.wav";
+                            promptText = "只要眼睛够尖，脑子够快，每天都能找到好新闻。";
+                            break;
+                        case "chat2":
+                            refAudioPath = "E:\\夏洛蒂\\vo_charlotte_friendship_02.wav";
+                            promptText = "刚做记者的时候，我对写报道文章一窍不通，只能通过阅读其他报道来学习。除了蒸汽鸟报之外，还有一些在小范围印发的私人刊物。比如专门报道枫丹廷内各种明星八卦的观窥者报、持续关注各种娱乐活动和赛事的娱乐家周刊、评论美食的主厨、只会胡说八道和造谣传谣的惊奇！等等。这些报纸都给了我很大的启发，让我学会了…嗯，驾驭许多不同的行文风格。";
+                            break;
+                        case "chat3":
+                            refAudioPath = "E:\\夏洛蒂\\vo_charlotte_friendship_04.wav";
+                            promptText = "在小时候，我还没入记者这行的时候，我的好奇心特别重，总觉得万事万物后都隐藏着秘密。对我来说，这个世界是一片巨大的藏宝地，藏匿着无数不为人知的故事等待发掘。每当遇见那些我觉得藏匿有秘密的事物，就会拿出留影机拍下一张画片，放在我的画片集里。这些画片都是只属于我的藏宝图…而我也一直不断用各种方法解读着它们，试图揭示出隐藏在画片中的真相。";
+                            break;
+                        case "enthusiasm":
+                            refAudioPath = "E:\\夏洛蒂\\vo_DPEQ001_16_charlotte_01.wav";
+                            promptText = "您客气了。早就听闻蒙德是自由与诗歌之城，这里的氛围也如传言一般，弥漫着惬意的味道。";
+                            break;
+                        case "vivid":
+                            refAudioPath = "E:\\夏洛蒂\\vo_charlotte_teamJoin_03.wav";
+                            promptText = "靠得越近，报道越真实。";
+                            break;
+                        case "Happy":
+                            refAudioPath = "E:\\夏洛蒂\\vo_card_charlotte_inGame_easy_01.wav";
+                            promptText = "果然有用。";
+                            break;
+                        case "angry":
+                            refAudioPath = "E:\\夏洛蒂\\vo_QZLQ002_9_charlotte_02.wav";
+                            promptText = "这都是谁干的？告诉我名字，我明天就让他登报！";
+                            break;
+                        case "angry2":
+                            refAudioPath = "E:\\夏洛蒂\\vo_QZLQ002_3_charlotte_03.wav";
+                            promptText = "是吧？我也被气得够呛！";
+                            break;
+                        case "anxious":
+                            refAudioPath = "E:\\夏洛蒂\\vo_SLLQ001_13_charlotte_11.wav";
+                            promptText = "什么？有人想对可爱的美露莘下手？";
+                            break;
+                        case "111":
+                            refAudioPath = "E:\\夏洛蒂\\vo_dialog_DPEQ002_charlotte_01.wav";
+                            promptText = "您好您好，我是来自枫丹「蒸汽鸟报社」的记者夏洛蒂。";
+                            break;
+                        case "News":
+                            refAudioPath = "E:\\夏洛蒂\\vo_dialog_DPEQ002_charlotte_03.wav";
+                            promptText = "您一路过关斩将，最后关头不敌往生堂的胡桃胡堂主，与冠军失之交臂，看起来相当遗憾。";
+                            break;
+                        case "ask":
+                            refAudioPath = "E:\\夏洛蒂\\vo_dialog_DPEQ002_charlotte_02.wav";
+                            promptText = "请问方便抽点时间吗？我想对您做个简单采访。";
+                            break;
+                    }
+                    break;
+                case 'keqing':
+                    switch (emotion) {
+                        case "Normal":
+                            refAudioPath = "E:\\刻晴\\vo_keqing_draw_appear.wav";
+                            promptText = "我是刻晴，璃月七星中的「玉衡」。变革的时机已经到来，维持了千年的秩序即将被改写。这历史性的时刻，你愿意和我一起见证吗？";
+                            break;
+                        case "Normal2":
+                            refAudioPath = "E:\\刻晴\\vo_dialog_SHLQ002_keqing_02.wav";
+                            promptText = "有什么事吗？我现在很忙，恐怕聊不了太久。";
+                            break;
+                        case "alah":
+                            refAudioPath = "E:\\刻晴\\vo_EQZYJ001_17_keqing_06.wav";
+                            promptText = "帝君向来注重传统…可惜从今往后，传承传统的事只能由我们这些后人来完成了。";
+                            break;
+                        case "prevent":
+                            refAudioPath = "E:\\刻晴\\vo_LYAQ201_8_keqing_01.wav";
+                            promptText = "住手！何事喧哗？";
+                            break;
+                        case "momentum":
+                            refAudioPath = "E:\\刻晴\\vo_LYAQ205_4_keqing_01.wav";
+                            promptText = "能行动的千岩军，都跟我上！";
+                            break;
+                        case "ambivalent":
+                            refAudioPath = "E:\\刻晴\\vo_EQZYJ002_17_keqing_06.wav";
+                            promptText = "香菱是我朋友，于情于理，我都该跟她坦白这件事。";
+                            break;
+                        case "chat":
+                            refAudioPath = "E:\\刻晴\\vo_keqing_explore_idle_01.wav";
+                            promptText = "耽误太多时间，事情可就做不完了。";
+                            break;
+                    }
+                    break;
+                case 'chevreuse':
+                    switch (emotion) {
+                        case "Normal":
+                            refAudioPath = "D:\\夏沃蕾\\vo_chevreuse_character_idle_02.wav";
+                            promptText = "我们特巡队并不参与枫丹廷的日常巡视工作，我们追捕的人，也不可能在大街上露面。";
+                            break;
+                    }
+                    break;
+                default:
+                    console.error('未知角色：', character);
+                    break;
+            }
+
+            // 更新参考音频路径
+            const refAudioInput = document.getElementById('refAudioPath');
+            refAudioInput.value = refAudioPath;
+        }
+
+        async function synthesizeAudio() {
+            // 获取合成按钮和设置文本
+            const synthesizeButton = document.getElementById('synthesizeButton');
+            const originalButtonText = synthesizeButton.innerHTML;
+
+            // 禁用按钮并显示“正在合成…”状态
+            synthesizeButton.disabled = true;
+            synthesizeButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在合成...';
+
+            // 设置5分钟的超时定时器
+            const timeout = setTimeout(() => {
+                alert("请求超时，请稍后重试。");
+                synthesizeButton.disabled = false;
+                synthesizeButton.innerHTML = originalButtonText;
+            }, 5 * 60 * 1000); // 5分钟
+
+            // 设置角色和情感选项
+            const character = document.getElementById('character').value;
+            const emotion = document.getElementById('emotion').value;
+            
+            // 获取用户选择的分割方式
+            const splitMethodSelect = document.getElementById("splitMethod");
+            const textSplitMethod = splitMethodSelect.value;
+
+            //如果未选择角色，则回复按钮并提示用户选择角色
+            if (!character) {
+                clearTimeout(timeout);
+                synthesizeButton.disabled = false;
+                synthesizeButton.innerHTML = originalButtonText;
+                alert("请先选择角色");
+                return;
+            }
+
+            // 更新语音模型和参考音频路径
+            await setVoiceModel(character);
+            updateRefAudioPath(character, emotion);
+
+            // 获取用户输入的文本、语言、情感和切分方式
+            const text = document.getElementById("text").value;
+            const textLang = document.getElementById("textLang").value;
+            const refAudioPath = document.getElementById("refAudioPath").value;
+
+            // 构建API请求URL
+            const apiUrl = `http://110.42.111.82:9880/?text=${encodeURIComponent(text)}&text_lang=${textLang}&ref_audio_path=${encodeURIComponent(refAudioPath)}&prompt_lang=${textLang}&prompt_text=${encodeURIComponent(promptText)}&text_split_method=${textSplitMethod}&batch_size=10&media_type=wav`;
+
+            try {
+                // 发起请求
+                const response = await fetch(apiUrl);
+                if (response.ok) {
+                    clearTimeout(timeout);
+                    audioBlob = await response.blob();
+                    audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    // 显示音频播放器并准备播放
+                    showAudioPlayer();
+                } else {
+                    throw new Error("请求失败: " + response.statusText);
+                }
+            } catch (error) {
+                console.error("请求错误: ", error);
+                alert(error.message); // 弹窗提示错误信息
+            } finally {
+                // 重新启用按钮并恢复原始文本
+                synthesizeButton.disabled = false;
+                synthesizeButton.innerHTML = originalButtonText;
+            }
+        }
+
+        function showAudioPlayer() {
+            const playerContainer = document.getElementById('audioPlayerContainer');
+            playerContainer.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+            
+            // 显示准备进度条
+            const prepProgress = document.getElementById('preparationProgress');
+            const audioControls = document.getElementById('audioControls');
+            
+            prepProgress.classList.remove('hidden');
+            audioControls.classList.add('hidden');
+            
+            // 初始化音频元素
+            if (!audioElement) {
+                audioElement = new Audio(audioUrl);
+                
+                // 设置音频事件监听
+                audioElement.addEventListener('loadedmetadata', updateDuration);
+                audioElement.addEventListener('timeupdate', updateProgress);
+                audioElement.addEventListener('ended', onAudioEnd);
+                
+                // 设置音量控制
+                const volumeBar = document.getElementById('volumeBar');
+                volumeBar.addEventListener('input', () => {
+                    audioElement.volume = volumeBar.value;
+                    updateVolumeIcon();
+                });
+                
+                // 设置进度条控制
+                const seekBar = document.getElementById('seekBar');
+                seekBar.addEventListener('input', () => {
+                    const seekTime = audioElement.duration * (seekBar.value / 100);
+                    audioElement.currentTime = seekTime;
+                });
+                
+                // 设置播放/暂停按钮
+                const playPauseBtn = document.getElementById('playPauseBtn');
+                playPauseBtn.addEventListener('click', togglePlayPause);
+                
+                // 设置下载按钮
+                const downloadBtn = document.getElementById('downloadBtn');
+                downloadBtn.addEventListener('click', downloadAudio);
+                
+                // 设置音量按钮
+                const volumeBtn = document.getElementById('volumeBtn');
+                volumeBtn.addEventListener('click', toggleMute);
+            } else {
+                audioElement.src = audioUrl;
+            }
+            
+            // 倒计时1秒后播放
+            startPreparationTimer();
+        }
+
+        function startPreparationTimer() {
+            const prepTime = document.getElementById('prepTime');
+            const prepProgressBar = document.getElementById('prepProgressBar');
+            let timeLeft = 1;
+            const interval = setInterval(() => {
+                timeLeft -= 0.1;
+                prepTime.textContent = timeLeft.toFixed(1) + 's';
+                prepProgressBar.style.width = (1 - timeLeft) * 100 + '%';
+                
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    document.getElementById('preparationProgress').classList.add('hidden');
+                    document.getElementById('audioControls').classList.remove('hidden');
+                    
+                    // 开始播放
+                    togglePlayPause();
+                }
+            }, 100);
+        }
+
+        function togglePlayPause() {
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            
+            if (audioElement.paused) {
+                // 启动音频上下文（如果尚未启动）
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                audioElement.play()
+                    .then(() => {
+                        playPauseBtn.innerHTML = '<i class="fa-solid fa-pause text-xl"></i>';
+                    })
+                    .catch(error => {
+                        console.error("播放失败:", error);
+                        alert("播放失败: " + error.message);
+                    });
+            } else {
+                audioElement.pause();
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-play text-xl"></i>';
+            }
+        }
+
+        function updateProgress() {
+            const seekBar = document.getElementById('seekBar');
+            const currentTime = document.getElementById('currentTime');
+            
+            if (audioElement.duration) {
+                const progress = (audioElement.currentTime / audioElement.duration) * 100;
+                seekBar.value = progress;
+                
+                // 更新当前时间显示
+                currentTime.textContent = formatTime(audioElement.currentTime);
+            }
+        }
+
+        function updateDuration() {
+            const duration = document.getElementById('duration');
+            duration.textContent = formatTime(audioElement.duration);
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function onAudioEnd() {
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            playPauseBtn.innerHTML = '<i class="fa-solid fa-play text-xl"></i>';
+            stopVisualization();
+        }
+
+        function updateVolumeIcon() {
+            const volumeBtn = document.getElementById('volumeBtn');
+            const volume = document.getElementById('volumeBar').value;
+            
+            if (volume == 0) {
+                volumeBtn.innerHTML = '<i class="fa-solid fa-volume-off"></i>';
+            } else if (volume < 0.5) {
+                volumeBtn.innerHTML = '<i class="fa-solid fa-volume-low"></i>';
+            } else {
+                volumeBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }
+        }
+
+        function toggleMute() {
+            const volumeBar = document.getElementById('volumeBar');
+            
+            if (audioElement.volume > 0) {
+                audioElement.dataset.lastVolume = audioElement.volume;
+                audioElement.volume = 0;
+                volumeBar.value = 0;
+            } else {
+                audioElement.volume = audioElement.dataset.lastVolume || 1;
+                volumeBar.value = audioElement.volume;
+            }
+            
+            updateVolumeIcon();
+        }
+
+        function downloadAudio() {
+            if (audioBlob) {
+                const link = document.createElement('a');
+                link.href = audioUrl;
+                link.download = '合成音频.wav';
+                link.click();
+            }
+        }
+
+        function initWaveform() {
+            // 创建音频上下文
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // 创建音频分析器
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            // 创建canvas元素
+            const waveformContainer = document.getElementById('waveform');
+            waveformContainer.innerHTML = '';
+            
+            canvas = document.createElement('canvas');
+            canvasCtx = canvas.getContext('2d');
+            waveformContainer.appendChild(canvas);
+            
+            // 设置canvas尺寸
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        function resizeCanvas() {
+            const waveformContainer = document.getElementById('waveform');
+            canvas.width = waveformContainer.offsetWidth;
+            canvas.height = waveformContainer.offsetHeight;
+        }
+
+        function startVisualization() {
+            // 只在第一次播放时创建媒体源节点
+            if (!mediaSourceNode && audioElement && audioContext) {
+                try {
+                    // 创建媒体源节点
+                    mediaSourceNode = audioContext.createMediaElementSource(audioElement);
+                    // 连接分析器
+                    mediaSourceNode.connect(analyser);
+                    analyser.connect(audioContext.destination);
+                } catch (error) {
+                    console.error("创建媒体源节点失败:", error);
+                    alert("波形可视化初始化失败: " + error.message);
+                    return;
+                }
+            }
+            
+            // 启动可视化动画
+            function draw() {
+                animationId = requestAnimationFrame(draw);
+                
+                // 获取音频数据
+                analyser.getByteTimeDomainData(dataArray);
+                
+                // 清空画布
+                canvasCtx.fillStyle = 'rgb(245, 245, 245)';
+                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制波形
+                canvasCtx.lineWidth = 2;
+                canvasCtx.strokeStyle = '#4CAF50';
+                canvasCtx.beginPath();
+                
+                const sliceWidth = canvas.width * 1.0 / bufferLength;
+                let x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * canvas.height / 2;
+                    
+                    if (i === 0) {
+                        canvasCtx.moveTo(x, y);
+                    } else {
+                        canvasCtx.lineTo(x, y);
+                    }
+                    
+                    x += sliceWidth;
+                }
+                
+                canvasCtx.lineTo(canvas.width, canvas.height / 2);
+                canvasCtx.stroke();
+            }
+            
+            // 启动动画循环
+            draw();
+        }
+
+        function stopVisualization() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            // 清空画布
+            if (canvasCtx) {
+                canvasCtx.fillStyle = 'rgb(245, 245, 245)';
+                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+    </script>
+    <!-- 注册 Service Worker，支持 PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log('Service Worker 注册成功'))
+                    .catch(err => console.warn('Service Worker 注册失败:', err));
+            });
+        }
+    </script>
+</body>
+</html>
