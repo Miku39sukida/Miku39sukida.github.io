@@ -49,31 +49,6 @@ body {
     font-weight: 700;
 }
 
-.install-btn {
-    position: absolute;
-    right: 0;
-    top: 0;
-    padding: 8px 14px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
-    transition: all 0.2s ease;
-}
-
-.install-btn:hover {
-    background: #5568d3;
-    transform: translateY(-1px);
-}
-
-.install-btn:active {
-    transform: translateY(0);
-}
-
 .timer-display {
     text-align: center;
     margin-bottom: 30px;
