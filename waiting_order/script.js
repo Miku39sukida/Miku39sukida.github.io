@@ -235,7 +235,7 @@ let platformSelect, orderNumber, ttsStatus, characterSelect, emotionSelect;
 let timeSelector, timeSelectorSec; // 时间选择器容器
 let selectedMinutes = 10; // 默认10分钟
 let selectedSeconds = 0; // 默认0秒
-let sidebarToggle, sidebar, sidebarClose, sidebarOverlay, clearCacheBtn, forceReloadBtn, installSidebarBtn; // 侧边栏相关元素
+let sidebarToggle, sidebar, sidebarClose, sidebarOverlay, clearCacheBtn, forceReloadBtn; // 侧边栏相关元素
 
 // 初始化
 function init() {
@@ -267,7 +267,6 @@ function init() {
     sidebarOverlay = document.getElementById('sidebarOverlay');
     clearCacheBtn = document.getElementById('clearCacheBtn');
     forceReloadBtn = document.getElementById('forceReloadBtn');
-    installSidebarBtn = document.getElementById('installSidebarBtn');
     
     // 检查关键元素
     const missingElements = [];
@@ -1291,47 +1290,6 @@ function registerServiceWorker() {
             console.warn('Service Worker 注册失败:', err);
         });
     }
-}
-
-// 安装提示（PWA 安装按钮）
-let deferredPrompt = null;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) installBtn.style.display = 'inline-block';
-    if (installSidebarBtn) installSidebarBtn.style.display = 'inline-block';
-});
-
-window.addEventListener('appinstalled', () => {
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) installBtn.style.display = 'none';
-    if (installSidebarBtn) installSidebarBtn.style.display = 'none';
-    deferredPrompt = null;
-});
-
-const installBtn = document.getElementById('installBtn');
-function triggerInstall() {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(({ outcome }) => {
-        console.log('PWA 安装结果:', outcome);
-    }).catch((err) => {
-        console.warn('PWA 安装出错:', err);
-    }).finally(() => {
-        deferredPrompt = null;
-        const installBtnLocal = document.getElementById('installBtn');
-        if (installBtnLocal) installBtnLocal.style.display = 'none';
-        if (installSidebarBtn) installSidebarBtn.style.display = 'none';
-    });
-}
-
-if (installBtn) {
-    installBtn.addEventListener('click', triggerInstall);
-}
-if (installSidebarBtn) {
-    installSidebarBtn.addEventListener('click', triggerInstall);
 }
 
 // 将函数暴露到全局作用域（备用）
