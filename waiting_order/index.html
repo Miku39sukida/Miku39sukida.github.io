@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>等餐倒计时</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 侧边栏按钮 -->
+    <button class="sidebar-toggle" id="sidebarToggle" title="打开设置">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+        </svg>
+    </button>
+
+    <!-- 侧边栏 -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>设置</h3>
+            <button class="sidebar-close" id="sidebarClose" title="关闭">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <button class="btn btn-danger btn-block" id="clearCacheBtn">清除缓存</button>
+            <p class="sidebar-hint">清除所有保存的音频文件和设置</p>
+            <button class="btn btn-secondary btn-block" id="forceReloadBtn">清除页面缓存并重载</button>
+            <p class="sidebar-hint">清除浏览器缓存（含Service Worker缓存）并强制刷新页面</p>
+            <button class="btn btn-primary btn-block" id="installSidebarBtn" style="display:none;">安装应用</button>
+            <p class="sidebar-hint">如果看到按钮，点击可安装为桌面应用</p>
+        </div>
+    </div>
+
+    <!-- 侧边栏遮罩 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>等餐倒计时</h1>
+            <button class="install-btn" id="installBtn" style="display:none;">安装应用</button>
+        </div>
+
+        <div class="timer-display">
+            <div class="time" id="timeDisplay">00:00</div>
+            <div class="status" id="statusDisplay">准备开始</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn">开始倒计时</button>
+            <button class="btn btn-secondary" id="pauseBtn" disabled>暂停</button>
+            <button class="btn btn-danger" id="resetBtn">重置</button>
+        </div>
+
+        <div class="scenario-buttons">
+            <h3>场景选择</h3>
+            <div class="scenario-controls">
+                <div class="scenario-item">
+                    <button class="btn btn-success" id="actualReadyBtn">商家实际出餐</button>
+                    <div class="scenario-audio-controls">
+                        <button class="audio-preview-btn-small" id="actualReadyPreviewBtn" disabled>试听</button>
+                        <button class="audio-upload-btn-small" id="actualReadyUploadBtn">选择音频</button>
+                    </div>
+                </div>
+                <div class="scenario-item">
+                    <button class="btn btn-warning" id="earlyReadyBtn">商家提前点出餐</button>
+                    <div class="scenario-audio-controls">
+                        <button class="audio-preview-btn-small" id="earlyReadyPreviewBtn" disabled>试听</button>
+                        <button class="audio-upload-btn-small" id="earlyReadyUploadBtn">选择音频</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="audio-settings">
+            <h3>语音播报设置</h3>
+            <div class="audio-list" id="audioList">
+                <!-- 音频设置项将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <h3>设置</h3>
+            <div class="setting-item">
+                <label>初始倒计时时间（分钟）：</label>
+                <div class="time-selector" id="timeSelector">
+                    <!-- 方形按钮将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            <div class="setting-item">
+                <label>秒数：</label>
+                <div class="time-selector" id="timeSelectorSec">
+                    <!-- 秒数方形按钮将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="tts-settings">
+            <h3>语音合成设置</h3>
+            <div class="tts-item">
+                <label>角色选择：</label>
+                <select id="characterSelect" class="platform-select">
+                    <option value="hutao" selected>胡桃</option>
+                    <option value="klee">可莉</option>
+                    <option value="nahida">纳西妲</option>
+                    <option value="zhongli">钟离</option>
+                    <option value="LuoTianyi">洛天依</option>
+                    <option value="Charlotte">夏洛蒂</option>
+                    <option value="keqing">刻晴</option>
+                    <option value="chevreuse">夏沃蕾</option>
+                </select>
+            </div>
+            <div class="tts-item">
+                <label>情感选择：</label>
+                <select id="emotionSelect" class="platform-select">
+                    <!-- 情感选项将由JavaScript动态更新 -->
+                </select>
+            </div>
+            <div class="tts-item">
+                <label>平台选择：</label>
+                <select id="platformSelect" class="platform-select">
+                    <option value="美团外卖">美团外卖</option>
+                    <option value="饿了么">饿了么</option>
+                    <option value="淘宝闪购">淘宝闪购</option>
+                    <option value="京东秒送">京东秒送</option>
+                </select>
+            </div>
+            <div class="tts-item">
+                <label>订单号：</label>
+                <input type="text" id="orderNumber" class="order-input" placeholder="请输入订单号">
+            </div>
+            <div class="tts-status" id="ttsStatus"></div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <a href="胡桃整活.zip" download class="footer-link">站长提供的默认文件</a>
+        <a href="../GPT-SoVITS_API.html" class="footer-link">语音合成</a>
+    </footer>
+
+    <script src="script.js?v=2"></script>
+</body>
+</html>
+
